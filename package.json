@@ -1,0 +1,12 @@
+{
+  "name": "traffic-violation-finder_3009",
+  "version": "1.0.0",
+  "description": "現行台灣交通法令違規查詢、罰款試算與民眾檢舉項目速查系統",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["traffic", "taiwan", "laws", "violations", "fine"],
+  "author": "Antigravity",
+  "license": "MIT"
+}

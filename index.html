@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交通法規違規查詢與民眾檢舉速查系統 | 道路交通管理處罰條例 (Port 3009)</title>
+    <!-- Tailwind CSS v4 CDN -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        /* 緊縮設計 Tight Spacing 專用輔助樣式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .tight-table th, .tight-table td {
+            padding: 0.35rem 0.5rem;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.7rem;
+            line-height: 1rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen text-xs antialiased selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- 頂部導航列 (緊湊 Tight Header) -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 border-b border-slate-800 px-3 py-1.5 backdrop-blur shadow-sm">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+                <div class="h-7 w-7 rounded-lg bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center font-bold text-white shadow text-sm">
+                    🚦
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="font-bold text-sm tracking-tight text-white">交通法規違規查詢與民眾檢舉速查系統</h1>
+                        <span class="badge bg-amber-500/15 text-amber-400 border border-amber-500/40">🔥 2026最新法規版</span>
+                        <span class="badge bg-blue-500/10 text-blue-400 border border-blue-500/30">Port 3009</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+                <!-- 車種切換快捷鍵 -->
+                <div class="flex items-center bg-slate-950 border border-slate-800 rounded p-0.5" title="切換預設優先顯示的車種罰鍰">
+                    <span class="text-[10px] text-slate-400 px-1.5">車種:</span>
+                    <button class="btn-vehicle px-2 py-0.5 rounded text-[11px] font-medium transition bg-amber-500 text-slate-950 font-bold" data-vehicle="all">全部</button>
+                    <button class="btn-vehicle px-2 py-0.5 rounded text-[11px] font-medium transition text-slate-300 hover:text-white" data-vehicle="scooter">機車 🏍️</button>
+                    <button class="btn-vehicle px-2 py-0.5 rounded text-[11px] font-medium transition text-slate-300 hover:text-white" data-vehicle="car">小型車 🚗</button>
+                    <button class="btn-vehicle px-2 py-0.5 rounded text-[11px] font-medium transition text-slate-300 hover:text-white" data-vehicle="truck">大型車 🚚</button>
+                </div>
+
+                <!-- 2026新制16項懶人包按鈕 -->
+                <button id="btn-open-2026" class="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold flex items-center gap-1 animate-pulse">
+                    ⚡ 2026新制16項懶人包
+                </button>
+
+                <!-- 7日檢舉期限計算按鈕 -->
+                <button id="btn-open-deadline" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-medium flex items-center gap-1">
+                    📅 7日檢舉時效
+                </button>
+
+                <!-- 檢舉法規指南按鈕 -->
+                <button id="btn-open-guide" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-300 border border-blue-500/30 font-medium flex items-center gap-1">
+                    📖 檢舉要件與管道
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主操作過濾列 (緊縮設計 Tight Controls) -->
+    <div class="bg-slate-900/60 border-b border-slate-800/80 px-3 py-2">
+        <div class="flex flex-col gap-2">
+            <!-- 第一列：關鍵字搜尋 + 檢舉狀態篩選 + 視圖切換 -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- 搜尋框 -->
+                <div class="relative flex-1 min-w-[240px]">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        🔍
+                    </span>
+                    <input type="text" id="input-search" class="w-full pl-8 pr-7 py-1 text-xs bg-slate-950 border border-slate-700 rounded focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white placeholder-slate-500" placeholder="搜尋條文 (如 35、21、44)、毒駕、無照、抽菸、回訓、隔熱紙、並排、紅線、未禮讓...">
+                    <button id="btn-clear-search" class="hidden absolute inset-y-0 right-0 pr-2 flex items-center text-slate-500 hover:text-slate-300 text-sm">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- 民眾檢舉狀態篩選 Pills -->
+                <div class="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded p-0.5">
+                    <button class="filter-report-btn px-2.5 py-1 rounded text-xs font-semibold bg-slate-800 text-white" data-report="all">
+                        全部條文 (<span id="count-all">0</span>)
+                    </button>
+                    <button class="filter-report-btn px-2.5 py-1 rounded text-xs font-medium text-emerald-400 hover:bg-slate-900" data-report="yes">
+                        ✅ 民眾可檢舉 (<span id="count-yes">0</span>)
+                    </button>
+                    <button class="filter-report-btn px-2.5 py-1 rounded text-xs font-medium text-rose-400 hover:bg-slate-900" data-report="no">
+                        ❌ 僅警員取締/微罪 (<span id="count-no">0</span>)
+                    </button>
+                    <button class="filter-report-btn px-2.5 py-1 rounded text-xs font-medium text-amber-400 hover:bg-slate-900 flex items-center gap-0.5" data-report="fav">
+                        ⭐ 我的收藏 (<span id="count-fav">0</span>)
+                    </button>
+                </div>
+
+                <!-- 視圖切換 (表格 / 卡片) -->
+                <div class="flex items-center bg-slate-950 border border-slate-800 rounded p-0.5 ml-auto">
+                    <button id="btn-view-table" class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-white" title="密集表格模式 (可看最多資料)">
+                        📊 表格
+                    </button>
+                    <button id="btn-view-cards" class="px-2 py-0.5 rounded text-[11px] text-slate-400 hover:text-white" title="卡片模式">
+                        🗂️ 卡片
+                    </button>
+                </div>
+            </div>
+
+            <!-- 第二列：分類標籤快速篩選 (Categories Pills) -->
+            <div id="category-pills" class="flex items-center gap-1 overflow-x-auto py-0.5 text-nowrap">
+                <!-- 動態注入分類標籤 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 狀態統計與快速提示列 (極窄 Compact Stat Bar) -->
+    <div class="bg-slate-950 border-b border-slate-800/60 px-3 py-1 flex items-center justify-between text-[11px] text-slate-400">
+        <div>
+            找到 <strong id="stat-shown-count" class="text-amber-400 font-bold">0</strong> 筆法規項目
+            <span id="stat-filter-desc" class="ml-2 text-slate-500"></span>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-emerald-400 flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> 綠色：符合道交條例第7條之1可檢舉</span>
+            <span class="text-rose-400 flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span> 紅色：排除或未開放 (須報警取締)</span>
+            <span class="text-blue-400 hidden md:inline">💡 提示：點擊任何法規列即可展開完整裁罰要件與檢舉重點</span>
+        </div>
+    </div>
+
+    <!-- 法律效力與免責聲明橫幅 (Tight Spacing 緊湊欄) -->
+    <div class="bg-amber-950/40 border-b border-amber-500/40 px-3 py-1.5 flex items-center justify-between text-[11px] text-amber-200 flex-wrap gap-1">
+        <div class="flex items-center gap-1.5">
+            <span class="text-amber-400 font-bold">⚠️ 重要免責聲明：</span>
+            <span>本系統所載交通法規、罰款級距與檢舉要件<strong class="text-amber-300">「內容謹供參考」</strong>。若有法令疑慮、適用爭議或最新修法動態，<strong class="text-white">請逕至法務部<a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=K0040012" target="_blank" rel="noopener noreferrer" class="text-amber-300 font-bold underline hover:text-white mx-0.5">「全國法規資料庫」</a>查閱，或一律以「全國法規資料庫」最新公布之現行法律條文及各主管機關裁決為準</strong>。</span>
+        </div>
+        <a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=K0040012" target="_blank" rel="noopener noreferrer" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 px-2 py-0.5 rounded border border-amber-500/50 font-bold flex items-center gap-0.5 ml-auto text-nowrap">
+            📜 前往全國法規資料庫 ↗
+        </a>
+    </div>
+
+    <!-- 主展示內容區 -->
+    <main class="p-2 md:p-3">
+        <!-- 1. 表格視圖 (預設極緊湊模式) -->
+        <div id="container-table" class="overflow-x-auto rounded border border-slate-800 bg-slate-900/50 shadow-sm">
+            <table class="w-full text-left tight-table text-xs">
+                <thead class="bg-slate-900 text-slate-400 text-[11px] border-b border-slate-800 uppercase font-semibold">
+                    <tr>
+                        <th class="w-8 text-center">⭐</th>
+                        <th class="w-24">條文項款</th>
+                        <th class="w-28 text-center">民眾檢舉狀態</th>
+                        <th class="min-w-[200px]">違規行為事實 / 核心重點</th>
+                        <th class="w-24 text-right">機車罰鍰</th>
+                        <th class="w-24 text-right">小型車罰鍰</th>
+                        <th class="w-24 text-right">大型車罰鍰</th>
+                        <th class="w-40">記點與重大處分 (現場攔停)</th>
+                        <th class="w-16 text-center">詳情</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body" class="divide-y divide-slate-800/60 font-sans">
+                    <!-- 動態渲染表格內容 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. 卡片視圖 (卡片網格) -->
+        <div id="container-cards" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            <!-- 動態渲染卡片內容 -->
+        </div>
+
+        <!-- 查無資料時顯示 -->
+        <div id="no-result" class="hidden py-12 text-center text-slate-500">
+            <p class="text-2xl mb-1">🔍</p>
+            <p class="text-sm font-medium">找不到符合條件的違規條文</p>
+            <p class="text-[11px] text-slate-600 mt-1">請嘗試縮減搜尋字詞，或切換至「全部條文」查看。</p>
+        </div>
+    </main>
+
+    <!-- 頁尾聲明與官方連結 (緊縮設計 Footer) -->
+    <footer class="border-t border-slate-800 bg-slate-900/90 p-3 mt-4 text-[11px] text-slate-400">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5 text-center md:text-left">
+            <div>
+                <div class="flex items-center justify-center md:justify-start gap-1.5 font-bold text-amber-300 mb-1">
+                    <span>⚖️ 免責與法律效力避責聲明 (Disclaimer)</span>
+                </div>
+                <div class="text-slate-300 leading-relaxed max-w-4xl text-[11px] space-y-1">
+                    <p>一、<strong class="text-amber-400">【內容謹供參考】</strong>：本系統所有交通法規、罰款金額、民眾檢舉項目與違規記點等數據資訊均為輔助查詢工具，<strong class="text-amber-300">內容謹供參考</strong>，非屬政府正式法律意見或處分依據。</p>
+                    <p>二、<strong class="text-amber-400">【以全國法規資料庫為準】</strong>：各項違規事實認定、執法裁量權及檢舉成案與否，若有任何法令疑慮、文字爭議或版本差異，<strong class="text-white">請逕至法務部「全國法規資料庫」查閱，或一律以「全國法規資料庫」最新公告施行之《道路交通管理處罰條例》及各警察機關、監理裁決所之正式裁處書為準</strong>。</p>
+                    <p>三、<strong class="text-amber-400">【免責條款】</strong>：本系統不保證資料之即時零時差與絕對完整性，使用者因使用本網站資訊所衍生之任何檢舉爭議、行政裁罰、交通罰單或法律糾紛，本站均不承擔任何直接、間接、連帶或附隨之法律損害賠償責任。</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 text-nowrap">
+                <a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=K0040012" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1">
+                    📜 全國法規資料庫 ↗
+                </a>
+                <a href="https://www.npa.gov.tw/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-medium">
+                    內政部警政署 ↗
+                </a>
+                <a href="https://www.thb.gov.tw/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-medium">
+                    交通部公路局 ↗
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 條文詳細資訊抽屜/彈窗 Modal -->
+    <div id="modal-detail" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 bg-black/70 backdrop-blur-sm transition-opacity opacity-0 pointer-events-none">
+        <div class="glass-panel w-full max-w-2xl rounded-xl shadow-2xl p-4 relative transform transition-all scale-95 border border-slate-700 bg-slate-900">
+            <!-- Modal Header -->
+            <div class="flex items-start justify-between pb-2.5 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span id="modal-article" class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30"></span>
+                    <span id="modal-category" class="badge bg-slate-800 text-slate-300"></span>
+                    <span id="modal-report-badge" class="badge"></span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button id="modal-btn-fav" class="p-1 rounded text-slate-400 hover:text-amber-400 text-sm" title="加到收藏">⭐</button>
+                    <button class="modal-close p-1 rounded text-slate-400 hover:text-white text-base leading-none">✕</button>
+                </div>
+            </div>
+
+            <!-- Modal Body (緊湊資訊區塊) -->
+            <div class="mt-3 space-y-3 max-h-[75vh] overflow-y-auto pr-1">
+                <div>
+                    <h2 id="modal-title" class="text-sm md:text-base font-bold text-white mb-1"></h2>
+                    <p id="modal-report-desc" class="text-xs font-semibold"></p>
+                </div>
+
+                <!-- 裁罰金額車種矩陣 -->
+                <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                    <div class="text-[11px] font-bold text-slate-400 mb-1.5 flex justify-between">
+                        <span>💰 法定裁罰基準金額 (車種級距)</span>
+                        <span id="modal-fine-range" class="text-amber-400 font-bold"></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="p-1.5 rounded bg-slate-900 border border-slate-800">
+                            <div class="text-[10px] text-slate-500">機車 (二輪)</div>
+                            <div id="modal-fine-scooter" class="text-sm font-bold text-white font-mono mt-0.5">$0</div>
+                        </div>
+                        <div class="p-1.5 rounded bg-slate-900 border border-slate-800">
+                            <div class="text-[10px] text-slate-500">小型車 (自用車/計程車)</div>
+                            <div id="modal-fine-car" class="text-sm font-bold text-white font-mono mt-0.5">$0</div>
+                        </div>
+                        <div class="p-1.5 rounded bg-slate-900 border border-slate-800">
+                            <div class="text-[10px] text-slate-500">大型車 (客運/大貨車)</div>
+                            <div id="modal-fine-truck" class="text-sm font-bold text-white font-mono mt-0.5">$0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 違規記點與重大處分說明 -->
+                <div class="p-2 rounded bg-slate-950/80 border border-slate-800">
+                    <div class="text-[11px] font-bold text-amber-300 mb-0.5">⚠️ 違規記點與行政處分 (警攔檢生效)：</div>
+                    <p id="modal-points" class="text-xs text-white font-medium"></p>
+                    <p id="modal-points-note" class="text-[11px] text-slate-400 mt-1 bg-amber-500/5 p-1 rounded border border-amber-500/20"></p>
+                </div>
+
+                <!-- 法條原文 -->
+                <div>
+                    <div class="text-[11px] font-bold text-slate-400 mb-1">📜 《道路交通管理處罰條例》法律原文：</div>
+                    <div id="modal-legal-text" class="p-2 rounded bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed font-sans"></div>
+                </div>
+
+                <!-- 民眾檢舉佐證指引與採證重點 -->
+                <div class="p-2 rounded bg-blue-950/20 border border-blue-500/20">
+                    <div class="text-[11px] font-bold text-blue-300 mb-1 flex items-center gap-1">
+                        <span>📸 民眾檢舉佐證要件與拍照/錄影重點：</span>
+                    </div>
+                    <p id="modal-evidence-tips" class="text-xs text-slate-200 leading-relaxed"></p>
+                </div>
+
+                <!-- 標籤列表 -->
+                <div id="modal-tags" class="flex flex-wrap gap-1 pt-1">
+                    <!-- 標籤 -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-3 pt-2.5 border-t border-slate-800 flex justify-between items-center">
+                <span class="text-[10px] text-slate-400">※ 本條文與罰款級距<strong class="text-amber-400">謹供參考</strong>，若有法令疑慮或爭議，請至法務部<a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=K0040012" target="_blank" rel="noopener noreferrer" class="text-amber-300 underline font-semibold mx-0.5">「全國法規資料庫」</a>查閱，或一律以官方最新有效條文為準。</span>
+                <button class="modal-close px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7日檢舉時效計算器 Modal -->
+    <div id="modal-deadline" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 bg-black/70 backdrop-blur-sm transition-opacity opacity-0 pointer-events-none">
+        <div class="glass-panel w-full max-w-md rounded-xl shadow-2xl p-4 relative transform transition-all scale-95 border border-slate-700 bg-slate-900">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-bold text-sm text-white flex items-center gap-1.5">
+                    📅 交通違規 7 日檢舉時效即時計算器
+                </h3>
+                <button class="modal-close p-1 rounded text-slate-400 hover:text-white text-base leading-none">✕</button>
+            </div>
+            
+            <div class="mt-3 space-y-3">
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    依《道路交通管理處罰條例》第7條之1規定：民眾檢舉違規行為，<strong class="text-amber-400">自違規日起「7日」內</strong>必須向公路主管機關或警察機關提出檢舉（以警方系統收件日為準），逾期將依法不受理！
+                </p>
+
+                <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+                    <label class="block text-[11px] font-bold text-slate-400 mb-1">請選擇或輸入「違規發生日期」：</label>
+                    <input type="date" id="input-violation-date" class="w-full py-1.5 px-2 bg-slate-900 border border-slate-700 rounded text-xs text-white focus:border-amber-500 focus:outline-none font-sans">
+                </div>
+
+                <!-- 計算結果面板 -->
+                <div id="deadline-result-box" class="p-3 rounded border text-center transition-all bg-slate-950 border-slate-800 hidden">
+                    <div class="text-[11px] text-slate-400">最後檢舉送件截止日：</div>
+                    <div id="deadline-date-text" class="text-lg font-bold text-amber-400 font-mono my-1"></div>
+                    <div id="deadline-status-badge" class="inline-block px-2 py-0.5 rounded text-xs font-bold"></div>
+                    <p id="deadline-remain-text" class="text-[11px] text-slate-400 mt-1"></p>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-2 border-t border-slate-800 flex justify-end">
+                <button class="modal-close px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2024修法重點與檢舉教戰指南 Modal -->
+    <div id="modal-guide" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 bg-black/70 backdrop-blur-sm transition-opacity opacity-0 pointer-events-none">
+        <div class="glass-panel w-full max-w-xl rounded-xl shadow-2xl p-4 relative transform transition-all scale-95 border border-slate-700 bg-slate-900">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-bold text-sm text-white flex items-center gap-1.5">
+                    📖 2024年交通違規檢舉重大修法重點與線上入口
+                </h3>
+                <button class="modal-close p-1 rounded text-slate-400 hover:text-white text-base leading-none">✕</button>
+            </div>
+
+            <div class="mt-3 space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                <div class="p-2.5 rounded bg-amber-500/10 border border-amber-500/30">
+                    <h4 class="font-bold text-xs text-amber-300 mb-1">🚨 2024年6月30日正式實施兩大核心變革：</h4>
+                    <ul class="list-disc pl-4 space-y-1 text-xs text-slate-300">
+                        <li><strong class="text-white">民眾檢舉一律不記點：</strong>考量記點直接影響職業駕駛人生計，民眾檢舉之案件「只罰款、不記點」；必須由警察現場當場攔檢舉發始予記點。</li>
+                        <li><strong class="text-white">限縮微罪檢舉項目：</strong>紅線臨時停車、紅線停車、公車站牌/路口10公尺停車、騎樓與人行道臨時停車等，皆已排除於檢舉項目外（如有違規嚴重阻礙，請撥打 110 由警力派遣現場開單或拖吊）。</li>
+                    </ul>
+                </div>
+
+                <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+                    <h4 class="font-bold text-xs text-blue-300 mb-1.5">📸 檢舉成案 5 大必備佐證要件：</h4>
+                    <div id="guide-essentials" class="space-y-1.5 text-xs text-slate-300">
+                        <!-- 動態填入 -->
+                    </div>
+                </div>
+
+                <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+                    <h4 class="font-bold text-xs text-emerald-300 mb-1.5">🌐 全台主要交通違規檢舉專區快速連結：</h4>
+                    <div id="guide-portals" class="grid grid-cols-2 gap-1.5 text-xs">
+                        <!-- 連結 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-2 border-t border-slate-800 flex justify-end">
+                <button class="modal-close px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2026年交通新制16項懶人包 Modal (TVBS地球黃金線報導同步) -->
+    <div id="modal-2026" class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm transition-opacity opacity-0 pointer-events-none">
+        <div class="glass-panel w-full max-w-3xl rounded-xl shadow-2xl p-4 relative transform transition-all scale-95 border border-amber-500/40 bg-slate-900">
+            <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span class="h-6 w-6 rounded bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs">⚡</span>
+                    <div>
+                        <h3 class="font-bold text-sm text-white flex items-center gap-1.5">
+                            台灣 2026 交通新制 16 項整理懶人包
+                            <span class="badge bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px]">TVBS專題整理</span>
+                        </h3>
+                    </div>
+                </div>
+                <button class="modal-close p-1 rounded text-slate-400 hover:text-white text-base leading-none">✕</button>
+            </div>
+
+            <div class="mt-3 space-y-2.5 max-h-[72vh] overflow-y-auto pr-1 text-xs">
+                <!-- 毒駕與無照最核心兩大項 -->
+                <div class="p-2.5 rounded bg-rose-950/30 border border-rose-500/40">
+                    <h4 class="font-bold text-rose-300 text-xs mb-1 flex items-center gap-1">
+                        <span>🚨 毒駕鐵腕沒入 + 拒測重罰 45 萬 (道路交通管理處罰條例第35條)</span>
+                    </h4>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-200">
+                        <li><strong class="text-white">一律吊銷駕照：</strong>取消過去輕症僅吊扣的彈性，凡毒駕查獲一律吊銷駕照。</li>
+                        <li><strong class="text-white">不論車主是誰，強制沒入車輛：</strong>車輛登記在他人名下亦一律沒入，遏止借車毒駕。</li>
+                        <li><strong class="text-white">拒測天價重罰：</strong>毒駕拒絕受測初犯罰 <strong class="text-amber-400">27 萬元</strong>；10年內第2次拒測直接重罰 <strong class="text-rose-400">45 萬元</strong>！慢車(微電車/單車)拒測亦罰 2.4 萬元。</li>
+                    </ul>
+                </div>
+
+                <div class="p-2.5 rounded bg-amber-950/30 border border-amber-500/40">
+                    <h4 class="font-bold text-amber-300 text-xs mb-1 flex items-center gap-1">
+                        <span>🚨 無照駕駛重罰狂飆 + 車主連坐 (第21條)</span>
+                    </h4>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-200">
+                        <li><strong class="text-white">罰鍰上限大幅提高：</strong>汽車無照初犯處 <strong class="text-amber-400">3.6萬 ～ 6萬元</strong>（舊制2.4萬）；機車無照處 <strong class="text-amber-400">1.8萬 ～ 3.6萬元</strong>；大型車達 8 萬元，並當場扣車！</li>
+                        <li><strong class="text-white">累犯加嚴至 10 年：</strong>10年內第2次直接處最高額開罰；第3次以上累進加罰（汽車每次加1.2萬無上限）。</li>
+                        <li><strong class="text-white">車主連坐處分：</strong>借車給無照者，車主同受重罰 1.2萬~2.4萬元、吊扣車牌 3個月至 1 年，並移置保管車輛。</li>
+                    </ul>
+                </div>
+
+                <!-- 16項條列矩陣 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-300">
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">3. 行車分心開罰 1,200 元</div>
+                        <p class="text-[11px] text-slate-400">汽機車行駛中點燃/吸食香菸影響他人、機車行駛手持手機，罰鍰調高至 1,200 元。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">4. 高風險累犯強制回訓</div>
+                        <p class="text-[11px] text-slate-400">闖紅燈、無號誌路口不讓、行穿線未減速，一年累計 3 次（大型車2次），強制自費上課 3 小時。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">5. 70歲高齡換照下修</div>
+                        <p class="text-[11px] text-slate-400">換照門檻由 75 歲下修為 70 歲起定期換照；自願繳回者提供 TPASS 乘車回饋（最高每月1500元）。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">6. 新車隔熱紙透光率納管</div>
+                        <p class="text-[11px] text-slate-400">2026起新車前擋透光率須達 70%、前側窗 40% 以上，違者罰 900~1,800 元，逾期吊扣牌照。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">7. 校園/醫院路段未減速加重</div>
+                        <p class="text-[11px] text-slate-400">未依標誌減速處 600~1,800 元，肇事致人死傷刑責依規定加重處罰。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">8. 雙北微電車禁入人行自行車道</div>
+                        <p class="text-[11px] text-slate-400">微型電動二輪車禁止進入人行道及自行車道（含河濱自行車道），違者罰 300~1,200 元。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">9. YouBike 未投保傷害險不得借</div>
+                        <p class="text-[11px] text-slate-400">北北桃等縣市實施未完成免費公共自行車傷害險投保者，系統鎖定無法租借。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">10. 客運/遊覽車裝設駕駛識別</div>
+                        <p class="text-[11px] text-slate-400">嚴控超時工時與疲勞駕駛，未依規定裝設識別設備最高罰 9,000 元。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">11. 台北市公有停車久停新制</div>
+                        <p class="text-[11px] text-slate-400">久停容許由 30 天縮至 10 天貼單、15 天拖吊，小客車移置費調升為 1,500 元。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">12. 桃機接送區科技執法</div>
+                        <p class="text-[11px] text-slate-400">臨停接送超過 3 分鐘科技執法開罰，最高裁罰 1,200 元。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">13. 汽機車考照制度大翻新</div>
+                        <p class="text-[11px] text-slate-400">筆試取消是非題全改選擇題，路考增加死角確認與無號誌路口停讓等實境科目。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">14. 機車考照預約放鳥處分</div>
+                        <p class="text-[11px] text-slate-400">線上預約考照無故缺席限制再次預約週期，防範佔用名額。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">15. 身障牌照稅免徵親屬放寬</div>
+                        <p class="text-[11px] text-slate-400">二親等內親屬持有符合條件亦得適用免徵牌照稅（每身障者以1輛為限）。</p>
+                    </div>
+                    <div class="p-2 rounded bg-slate-950 border border-slate-800">
+                        <div class="font-bold text-white mb-0.5">16. 電動車免牌照稅延至2030</div>
+                        <p class="text-[11px] text-slate-400">電動汽機車免徵使用牌照稅優惠正式拍板延長至 2030 年。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3.5 pt-2 border-t border-slate-800 flex items-center justify-between">
+                <a href="https://cars.tvbs.com.tw/life/302442" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 text-xs font-semibold flex items-center gap-1">
+                    🔗 參考 TVBS 地球黃金線專題報導原文 ↗
+                </a>
+                <button class="modal-close px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 腳本模組引入 -->
+    <script type="module">
+        import { categories, violationsData, reportGuidelines } from './data/violations.js';
+
+        // 狀態管理
+        let currentCategory = 'all';
+        let currentReportFilter = 'all'; // 'all', 'yes', 'no', 'fav'
+        let currentVehicle = 'all'; // 'all', 'scooter', 'car', 'truck'
+        let currentView = 'table'; // 'table', 'cards'
+        let searchQuery = '';
+        let favorites = JSON.parse(localStorage.getItem('traffic_favs') || '[]');
+
+        // DOM 元素
+        const elInputSearch = document.getElementById('input-search');
+        const elBtnClearSearch = document.getElementById('btn-clear-search');
+        const elCategoryPills = document.getElementById('category-pills');
+        const elTableBody = document.getElementById('table-body');
+        const elContainerTable = document.getElementById('container-table');
+        const elContainerCards = document.getElementById('container-cards');
+        const elNoResult = document.getElementById('no-result');
+        const elBtnViewTable = document.getElementById('btn-view-table');
+        const elBtnViewCards = document.getElementById('btn-view-cards');
+        
+        // 統計計數器
+        const elCountAll = document.getElementById('count-all');
+        const elCountYes = document.getElementById('count-yes');
+        const elCountNo = document.getElementById('count-no');
+        const elCountFav = document.getElementById('count-fav');
+        const elStatShownCount = document.getElementById('stat-shown-count');
+        const elStatFilterDesc = document.getElementById('stat-filter-desc');
+
+        // Modal 相關
+        const modalDetail = document.getElementById('modal-detail');
+        const modalDeadline = document.getElementById('modal-deadline');
+        const modalGuide = document.getElementById('modal-guide');
+        const modal2026 = document.getElementById('modal-2026');
+
+        // 儲存常用條文至 localStorage
+        function toggleFavorite(id) {
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(favId => favId !== id);
+            } else {
+                favorites.push(id);
+            }
+            localStorage.setItem('traffic_favs', JSON.stringify(favorites));
+            updateCounters();
+            render();
+            if (!modalDetail.classList.contains('pointer-events-none')) {
+                updateModalFavBtn(id);
+            }
+        }
+
+        function updateModalFavBtn(id) {
+            const btn = document.getElementById('modal-btn-fav');
+            if (favorites.includes(id)) {
+                btn.innerHTML = '⭐ <span class="text-amber-400 font-bold">已收藏</span>';
+            } else {
+                btn.innerHTML = '☆ <span class="text-slate-400">收藏此條</span>';
+            }
+        }
+
+        // 初始化分類標籤列
+        function renderCategories() {
+            elCategoryPills.innerHTML = categories.map(cat => {
+                const isActive = cat.id === currentCategory;
+                return `
+                    <button class="cat-pill px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                        isActive 
+                            ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' 
+                            : 'bg-slate-950/70 border border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'
+                    }" data-category="${cat.id}">
+                        ${cat.icon} ${cat.name}
+                    </button>
+                `;
+            }).join('');
+
+            // 綁定點擊事件
+            elCategoryPills.querySelectorAll('.cat-pill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCategory = btn.dataset.category;
+                    renderCategories();
+                    render();
+                });
+            });
+        }
+
+        // 更新計數器數字
+        function updateCounters() {
+            const allCount = violationsData.length;
+            const yesCount = violationsData.filter(v => v.reportable).length;
+            const noCount = violationsData.filter(v => !v.reportable).length;
+            const favCount = violationsData.filter(v => favorites.includes(v.id)).length;
+
+            elCountAll.innerText = allCount;
+            elCountYes.innerText = yesCount;
+            elCountNo.innerText = noCount;
+            elCountFav.innerText = favCount;
+        }
+
+        // 資料過濾核心算法
+        function getFilteredData() {
+            const query = searchQuery.trim().toLowerCase();
+
+            return violationsData.filter(item => {
+                // 分類過濾
+                if (currentCategory !== 'all' && item.category !== currentCategory) {
+                    return false;
+                }
+
+                // 民眾檢舉狀態過濾
+                if (currentReportFilter === 'yes' && !item.reportable) return false;
+                if (currentReportFilter === 'no' && item.reportable) return false;
+                if (currentReportFilter === 'fav' && !favorites.includes(item.id)) return false;
+
+                // 搜尋詞過濾 (比對法條號、標題、說明、標籤、罰款)
+                if (query) {
+                    const matchArticle = item.article.toLowerCase().includes(query);
+                    const matchTitle = item.title.toLowerCase().includes(query);
+                    const matchLegalText = item.legalText.toLowerCase().includes(query);
+                    const matchTags = item.tags.some(t => t.toLowerCase().includes(query));
+                    const matchBasis = item.reportLegalBasis.toLowerCase().includes(query);
+
+                    if (!matchArticle && !matchTitle && !matchLegalText && !matchTags && !matchBasis) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
+
+        // 渲染資料 (表格 / 卡片)
+        function render() {
+            const filtered = getFilteredData();
+            elStatShownCount.innerText = filtered.length;
+
+            let filterText = [];
+            if (currentCategory !== 'all') {
+                const catObj = categories.find(c => c.id === currentCategory);
+                if (catObj) filterText.push(`分類：${catObj.name}`);
+            }
+            if (currentReportFilter === 'yes') filterText.push('僅看民眾可檢舉');
+            if (currentReportFilter === 'no') filterText.push('僅看員警取締');
+            if (currentReportFilter === 'fav') filterText.push('僅看收藏');
+            if (searchQuery) filterText.push(`關鍵字：「${searchQuery}」`);
+            elStatFilterDesc.innerText = filterText.length > 0 ? `(${filterText.join(' · ')})` : '';
+
+            if (filtered.length === 0) {
+                elContainerTable.classList.add('hidden');
+                elContainerCards.classList.add('hidden');
+                elNoResult.classList.remove('hidden');
+                return;
+            }
+
+            elNoResult.classList.add('hidden');
+
+            if (currentView === 'table') {
+                elContainerTable.classList.remove('hidden');
+                elContainerCards.classList.add('hidden');
+                renderTable(filtered);
+            } else {
+                elContainerTable.classList.add('hidden');
+                elContainerCards.classList.remove('hidden');
+                renderCards(filtered);
+            }
+        }
+
+        // 1. 渲染緊湊高密度表格 (Tight Table View)
+        function renderTable(data) {
+            elTableBody.innerHTML = data.map(item => {
+                const isFav = favorites.includes(item.id);
+                const reportBadge = item.reportable 
+                    ? `<span class="badge bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✅ 可檢舉</span>` 
+                    : `<span class="badge bg-rose-500/15 text-rose-400 border border-rose-500/30">❌ 僅警取締</span>`;
+
+                // 根據選中的車種強調顯示
+                const scooterHighlight = currentVehicle === 'scooter' ? 'text-amber-400 font-bold bg-amber-500/10 px-1 rounded' : 'text-slate-300';
+                const carHighlight = currentVehicle === 'car' ? 'text-amber-400 font-bold bg-amber-500/10 px-1 rounded' : 'text-slate-300';
+                const truckHighlight = currentVehicle === 'truck' ? 'text-amber-400 font-bold bg-amber-500/10 px-1 rounded' : 'text-slate-300';
+
+                return `
+                    <tr class="hover:bg-slate-800/50 transition-colors cursor-pointer group" data-id="${item.id}">
+                        <td class="text-center">
+                            <button class="btn-toggle-fav text-sm text-slate-500 hover:text-amber-400 ${isFav ? 'text-amber-400' : ''}" data-id="${item.id}">
+                                ${isFav ? '⭐' : '☆'}
+                            </button>
+                        </td>
+                        <td class="font-mono font-bold text-amber-400 text-xs text-nowrap">${item.article}</td>
+                        <td class="text-center text-nowrap">${reportBadge}</td>
+                        <td>
+                            <div class="font-semibold text-white group-hover:text-amber-300 transition-colors">${item.title}</div>
+                            <div class="text-[10px] text-slate-400 truncate max-w-md mt-0.5">${item.tags.map(t => `#${t}`).join(' ')}</div>
+                        </td>
+                        <td class="text-right font-mono ${scooterHighlight}">
+                            ${item.fines.scooter > 0 ? '$' + item.fines.scooter.toLocaleString() : '-'}
+                        </td>
+                        <td class="text-right font-mono ${carHighlight}">
+                            ${item.fines.car > 0 ? '$' + item.fines.car.toLocaleString() : '-'}
+                        </td>
+                        <td class="text-right font-mono ${truckHighlight}">
+                            ${item.fines.truck > 0 ? '$' + item.fines.truck.toLocaleString() : '-'}
+                        </td>
+                        <td class="text-[11px] text-slate-300">
+                            <span class="truncate block max-w-xs" title="${item.points}">${item.points}</span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn-open-item px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-semibold" data-id="${item.id}">
+                                詳情
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            bindRowEvents();
+        }
+
+        // 2. 渲染卡片視圖 (Card View)
+        function renderCards(data) {
+            elContainerCards.innerHTML = data.map(item => {
+                const isFav = favorites.includes(item.id);
+                const borderColor = item.reportable ? 'border-emerald-500/30 hover:border-emerald-500/60' : 'border-slate-800 hover:border-slate-700';
+
+                return `
+                    <div class="p-3 rounded-lg bg-slate-900/80 border ${borderColor} flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group" data-id="${item.id}">
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-1.5">
+                                <span class="font-mono font-bold text-xs px-1.5 py-0.5 rounded bg-slate-950 text-amber-400 border border-slate-800">
+                                    ${item.article}
+                                </span>
+                                <div class="flex items-center gap-1">
+                                    ${item.reportable 
+                                        ? `<span class="badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">✅ 可檢舉</span>` 
+                                        : `<span class="badge bg-rose-500/10 text-rose-400 border border-rose-500/30">❌ 僅警取締</span>`}
+                                    <button class="btn-toggle-fav text-sm text-slate-500 hover:text-amber-400 ${isFav ? 'text-amber-400' : ''}" data-id="${item.id}">
+                                        ${isFav ? '⭐' : '☆'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <h3 class="text-xs font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-2 leading-snug mb-1.5">
+                                ${item.title}
+                            </h3>
+
+                            <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1.5 rounded border border-slate-800/80 text-center mb-2">
+                                <div>
+                                    <span class="text-[9px] text-slate-500 block">機車</span>
+                                    <span class="font-mono text-[11px] font-bold ${currentVehicle === 'scooter' ? 'text-amber-400' : 'text-slate-300'}">
+                                        ${item.fines.scooter > 0 ? '$' + item.fines.scooter.toLocaleString() : '-'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] text-slate-500 block">小型車</span>
+                                    <span class="font-mono text-[11px] font-bold ${currentVehicle === 'car' ? 'text-amber-400' : 'text-slate-300'}">
+                                        ${item.fines.car > 0 ? '$' + item.fines.car.toLocaleString() : '-'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] text-slate-500 block">大型車</span>
+                                    <span class="font-mono text-[11px] font-bold ${currentVehicle === 'truck' ? 'text-amber-400' : 'text-slate-300'}">
+                                        ${item.fines.truck > 0 ? '$' + item.fines.truck.toLocaleString() : '-'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="text-[11px] text-slate-400 mb-2 line-clamp-2">
+                                <span class="text-amber-400 font-semibold">處分：</span>${item.points}
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
+                            <span class="truncate max-w-[180px]">${item.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
+                            <span class="text-blue-400 font-semibold group-hover:underline">點擊看詳情 →</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            bindRowEvents();
+        }
+
+        // 綁定行與按鈕點擊事件
+        function bindRowEvents() {
+            // 收藏按鈕
+            document.querySelectorAll('.btn-toggle-fav').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    toggleFavorite(id);
+                });
+            });
+
+            // 點擊整列或詳情開啟 Modal
+            document.querySelectorAll('[data-id]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.closest('.btn-toggle-fav')) return;
+                    const id = el.dataset.id;
+                    openDetailModal(id);
+                });
+            });
+        }
+
+        // 開啟條文詳細彈窗
+        function openDetailModal(id) {
+            const item = violationsData.find(v => v.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-article').innerText = item.article;
+            const catObj = categories.find(c => c.id === item.category);
+            document.getElementById('modal-category').innerText = catObj ? catObj.name : '';
+            
+            const badge = document.getElementById('modal-report-badge');
+            if (item.reportable) {
+                badge.className = 'badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+                badge.innerText = '✅ 民眾可檢舉';
+            } else {
+                badge.className = 'badge bg-rose-500/20 text-rose-400 border border-rose-500/40';
+                badge.innerText = '❌ 僅限警方取締';
+            }
+
+            document.getElementById('modal-title').innerText = item.title;
+            const descEl = document.getElementById('modal-report-desc');
+            descEl.innerText = item.reportStatusDesc + (item.reportLegalBasis ? ` (${item.reportLegalBasis})` : '');
+            descEl.className = `text-xs font-semibold ${item.reportable ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            document.getElementById('modal-fine-range').innerText = item.fineRange;
+            document.getElementById('modal-fine-scooter').innerText = item.fines.scooter > 0 ? '$' + item.fines.scooter.toLocaleString() : '不適用';
+            document.getElementById('modal-fine-car').innerText = item.fines.car > 0 ? '$' + item.fines.car.toLocaleString() : '不適用';
+            document.getElementById('modal-fine-truck').innerText = item.fines.truck > 0 ? '$' + item.fines.truck.toLocaleString() : '不適用';
+
+            document.getElementById('modal-points').innerText = item.points;
+            document.getElementById('modal-points-note').innerText = item.pointsNote;
+            document.getElementById('modal-legal-text').innerText = item.legalText;
+            document.getElementById('modal-evidence-tips').innerText = item.evidenceTips;
+
+            const tagsContainer = document.getElementById('modal-tags');
+            tagsContainer.innerHTML = item.tags.map(t => `<span class="badge bg-slate-800 text-slate-300">#${t}</span>`).join('');
+
+            updateModalFavBtn(item.id);
+            document.getElementById('modal-btn-fav').onclick = () => toggleFavorite(item.id);
+
+            openModal(modalDetail);
+        }
+
+        // 開啟 / 關閉 Modal 通用函數
+        function openModal(modal) {
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.querySelector('.transform').classList.remove('scale-95');
+            modal.querySelector('.transform').classList.add('scale-100');
+        }
+
+        function closeModal(modal) {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+        }
+
+        // 綁定所有關閉 Modal 按鈕
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modal = btn.closest('.fixed');
+                if (modal) closeModal(modal);
+            });
+        });
+
+        // 點擊 Modal 外層半透明背景關閉
+        [modalDetail, modalDeadline, modalGuide, modal2026].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(modal);
+            });
+        });
+
+        // ESC 鍵關閉 Modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal(modalDetail);
+                closeModal(modalDeadline);
+                closeModal(modalGuide);
+                closeModal(modal2026);
+            }
+        });
+
+        // 開啟 2026 新制 16 項懶人包
+        document.getElementById('btn-open-2026').addEventListener('click', () => {
+            openModal(modal2026);
+        });
+
+        // 搜尋事件
+        elInputSearch.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            if (searchQuery) {
+                elBtnClearSearch.classList.remove('hidden');
+            } else {
+                elBtnClearSearch.classList.add('hidden');
+            }
+            render();
+        });
+
+        elBtnClearSearch.addEventListener('click', () => {
+            elInputSearch.value = '';
+            searchQuery = '';
+            elBtnClearSearch.classList.add('hidden');
+            render();
+            elInputSearch.focus();
+        });
+
+        // 檢舉狀態篩選 Pills 點擊
+        document.querySelectorAll('.filter-report-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentReportFilter = btn.dataset.report;
+                document.querySelectorAll('.filter-report-btn').forEach(b => {
+                    b.classList.remove('bg-slate-800', 'text-white', 'font-semibold');
+                    b.classList.add('hover:bg-slate-900');
+                });
+                btn.classList.add('bg-slate-800', 'text-white', 'font-semibold');
+                render();
+            });
+        });
+
+        // 車種切換
+        document.querySelectorAll('.btn-vehicle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentVehicle = btn.dataset.vehicle;
+                document.querySelectorAll('.btn-vehicle').forEach(b => {
+                    b.classList.remove('bg-amber-500', 'text-slate-950', 'font-bold');
+                    b.classList.add('text-slate-300');
+                });
+                btn.classList.add('bg-amber-500', 'text-slate-950', 'font-bold');
+                btn.classList.remove('text-slate-300');
+                render();
+            });
+        });
+
+        // 視圖切換
+        elBtnViewTable.addEventListener('click', () => {
+            currentView = 'table';
+            elBtnViewTable.classList.add('bg-slate-800', 'text-white', 'font-bold');
+            elBtnViewTable.classList.remove('text-slate-400');
+            elBtnViewCards.classList.remove('bg-slate-800', 'text-white', 'font-bold');
+            elBtnViewCards.classList.add('text-slate-400');
+            render();
+        });
+
+        elBtnViewCards.addEventListener('click', () => {
+            currentView = 'cards';
+            elBtnViewCards.classList.add('bg-slate-800', 'text-white', 'font-bold');
+            elBtnViewCards.classList.remove('text-slate-400');
+            elBtnViewTable.classList.remove('bg-slate-800', 'text-white', 'font-bold');
+            elBtnViewTable.classList.add('text-slate-400');
+            render();
+        });
+
+        // 7日檢舉期限計算器邏輯
+        const inputViolationDate = document.getElementById('input-violation-date');
+        const deadlineResultBox = document.getElementById('deadline-result-box');
+        const deadlineDateText = document.getElementById('deadline-date-text');
+        const deadlineStatusBadge = document.getElementById('deadline-status-badge');
+        const deadlineRemainText = document.getElementById('deadline-remain-text');
+
+        function updateDeadlineCalc() {
+            const dateStr = inputViolationDate.value;
+            if (!dateStr) {
+                deadlineResultBox.classList.add('hidden');
+                return;
+            }
+
+            const violationDate = new Date(dateStr);
+            violationDate.setHours(0, 0, 0, 0);
+
+            // 7日內：違規當日為第1日，或自違規日起算第7日 23:59:59 (即 +6 或 +7 天)
+            // 法務實務：自違規日之次日起算或當日起算7日內
+            const deadlineDate = new Date(violationDate);
+            deadlineDate.setDate(violationDate.getDate() + 7);
+            deadlineDate.setHours(23, 59, 59, 999);
+
+            const now = new Date();
+            const diffMs = deadlineDate.getTime() - now.getTime();
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+            const y = deadlineDate.getFullYear();
+            const m = String(deadlineDate.getMonth() + 1).padStart(2, '0');
+            const d = String(deadlineDate.getDate()).padStart(2, '0');
+            deadlineDateText.innerText = `${y}年${m}月${d}日 23:59 截止`;
+
+            deadlineResultBox.classList.remove('hidden');
+
+            if (diffDays < 0) {
+                deadlineStatusBadge.className = 'inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                deadlineStatusBadge.innerText = '❌ 已逾期！依法警察機關將不予受理舉發';
+                deadlineRemainText.innerText = `已超過法定期限 ${Math.abs(diffDays)} 天。`;
+            } else if (diffDays === 0 || diffDays === 1) {
+                deadlineStatusBadge.className = 'inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-red-500 text-white animate-pulse';
+                deadlineStatusBadge.innerText = '🚨 極度急迫！今日為最後送件期限！';
+                deadlineRemainText.innerText = '請立即前往各縣市警局檢舉專區送件！';
+            } else if (diffDays <= 3) {
+                deadlineStatusBadge.className = 'inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                deadlineStatusBadge.innerText = `⚠️ 剩餘 ${diffDays} 天送件時間`;
+                deadlineRemainText.innerText = '請儘速整理影像佐證資料並上傳。';
+            } else {
+                deadlineStatusBadge.className = 'inline-block px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                deadlineStatusBadge.innerText = `✅ 時效內 (尚有 ${diffDays} 天)`;
+                deadlineRemainText.innerText = '符合法定 7 日之內檢舉期限。';
+            }
+        }
+
+        inputViolationDate.addEventListener('change', updateDeadlineCalc);
+        document.getElementById('btn-open-deadline').addEventListener('click', () => {
+            if (!inputViolationDate.value) {
+                const today = new Date();
+                const y = today.getFullYear();
+                const m = String(today.getMonth() + 1).padStart(2, '0');
+                const d = String(today.getDate()).padStart(2, '0');
+                inputViolationDate.value = `${y}-${m}-${d}`;
+                updateDeadlineCalc();
+            }
+            openModal(modalDeadline);
+        });
+
+        // 檢舉指南 Modal 填充
+        document.getElementById('btn-open-guide').addEventListener('click', () => {
+            const containerEssentials = document.getElementById('guide-essentials');
+            containerEssentials.innerHTML = reportGuidelines.essentialElements.map(item => `
+                <div class="border-l-2 border-amber-500 pl-2 py-0.5">
+                    <span class="font-bold text-white text-xs">${item.title}：</span>
+                    <span class="text-slate-300">${item.desc}</span>
+                </div>
+            `).join('');
+
+            const containerPortals = document.getElementById('guide-portals');
+            containerPortals.innerHTML = reportGuidelines.policePortals.map(item => `
+                <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-blue-400 hover:text-blue-300 transition flex items-center justify-between">
+                    <span>${item.name}</span>
+                    <span>↗</span>
+                </a>
+            `).join('');
+
+            openModal(modalGuide);
+        });
+
+        // 初始化
+        renderCategories();
+        updateCounters();
+        render();
+    </script>
+</body>
+</html>
