@@ -1,7 +1,9 @@
 # 台灣交通法規違規查詢、罰鍰試算與民眾檢舉速查系統
 
-> **本機預設服務端口**：`http://localhost:3009`  
-> **版面設計**：全介面緊縮設計 (Tight Spacing)，單一畫面呈現最多實用資訊。
+> 🌐 **線上正式網址**：[https://moonlit-rolypoly-9ed89a.netlify.app/](https://moonlit-rolypoly-9ed89a.netlify.app/)  
+> 💻 **本機預設服務端口**：`http://localhost:3009`  
+> 📦 **GitHub 倉庫**：[https://github.com/oo0218oo-maker/traffic-violation-finder-3009](https://github.com/oo0218oo-maker/traffic-violation-finder-3009)  
+> 🎨 **版面設計**：全介面緊縮設計 (Tight Spacing)，單一畫面呈現最多實用資訊。
 
 ---
 
@@ -24,7 +26,7 @@
 
 ---
 
-## 🚀 快速啟動
+## 🚀 快速啟動與開發
 
 ### 方法一：Windows 批次檔
 雙擊執行專案目錄下的 `啟動伺服器.bat`，瀏覽器開啟 `http://localhost:3009`。
@@ -36,8 +38,14 @@ node server.js
 ```
 開啟瀏覽器連線至 `http://localhost:3009`。
 
-### 方法三：直接開啟
-因為本系統採用純前端 ES Module 與 Tailwind CSS CDN 架構，亦可直接雙擊 `index.html` 在現代瀏覽器中離線瀏覽。
+### 方法三：線上發布機制
+本專案已與 Netlify CI/CD 綁定，只要將修改推送到 GitHub 的 `main` 分支：
+```powershell
+git add .
+git commit -m "更新說明"
+git push origin main
+```
+Netlify 將在 20～60 秒內自動建置並發布到線上網址。
 
 ---
 
@@ -45,6 +53,7 @@ node server.js
 
 - [index.html](file:///G:/我的雲端硬碟/AI工作區/My_ai_projects/traffic-violation-finder_3009/index.html) - 前端核心介面（緊湊密集視圖、卡片切換、時效計算機、TVBS 2026懶人包、檢舉指南）
 - [data/violations.js](file:///G:/我的雲端硬碟/AI工作區/My_ai_projects/traffic-violation-finder_3009/data/violations.js) - 交通法規與檢舉要件資料集（含 44 項重點條文）
+- [netlify.toml](file:///G:/我的雲端硬碟/AI工作區/My_ai_projects/traffic-violation-finder_3009/netlify.toml) - Netlify 部署轉發配置
 - [server.js](file:///G:/我的雲端硬碟/AI工作區/My_ai_projects/traffic-violation-finder_3009/server.js) - 本機 HTTP 服務伺服器（Port 3009）
 - [啟動伺服器.bat](file:///G:/我的雲端硬碟/AI工作區/My_ai_projects/traffic-violation-finder_3009/啟動伺服器.bat) - 一鍵啟動批次檔
 - [package.json](file:///G:/我的雲端硬碟/AI工作區/My_ai_projects/traffic-violation-finder_3009/package.json) - 專案配置檔
